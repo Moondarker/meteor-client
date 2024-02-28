@@ -6,7 +6,7 @@
 package meteordevelopment.meteorclient.mixin.sodium;
 
 import com.llamalad7.mixinextras.injector.ModifyReturnValue;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.BlockOcclusionCache;
+import me.jellysquid.mods.sodium.client.render.occlusion.BlockOcclusionCache;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.render.Xray;
 import net.minecraft.block.BlockState;

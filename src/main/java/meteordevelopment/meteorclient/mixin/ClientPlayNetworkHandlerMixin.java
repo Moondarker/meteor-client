@@ -5,7 +5,6 @@
 
 package meteordevelopment.meteorclient.mixin;
 
-import baritone.api.BaritoneAPI;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import meteordevelopment.meteorclient.MeteorClient;
 import meteordevelopment.meteorclient.commands.Commands;
@@ -78,12 +77,6 @@ public abstract class ClientPlayNetworkHandlerMixin {
         }
 
         MeteorClient.EVENT_BUS.post(GameJoinedEvent.get());
-    }
-
-    // the server sends a GameJoin packet after the reconfiguration phase
-    @Inject(method = "onEnterReconfiguration", at = @At(value = "INVOKE", target = "Lnet/minecraft/network/NetworkThreadUtils;forceMainThread(Lnet/minecraft/network/packet/Packet;Lnet/minecraft/network/listener/PacketListener;Lnet/minecraft/util/thread/ThreadExecutor;)V", shift = At.Shift.AFTER))
-    private void onEnterReconfiguration(EnterReconfigurationS2CPacket packet, CallbackInfo info) {
-        MeteorClient.EVENT_BUS.post(GameLeftEvent.get());
     }
 
     @Inject(method = "onPlaySound", at = @At("HEAD"))
