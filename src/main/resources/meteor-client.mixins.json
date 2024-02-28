@@ -37,10 +37,8 @@
     "BufferRendererAccessor",
     "CameraMixin",
     "CapabilityTrackerMixin",
-    "CapeFeatureRendererMixin",
     "ChatHudAccessor",
     "ChatHudLineMixin",
-    "ChatHudLineVisibleMixin",
     "ChatHudMixin",
     "ChatInputSuggestorMixin",
     "ChatScreenMixin",
@@ -67,6 +65,7 @@
     "CreativeInventoryScreenAccessor",
     "CreativeSlotMixin",
     "CrossbowItemAccessor",
+    "CustomPayloadC2SPacketAccessor",
     "CustomPayloadS2CPacketMixin",
     "DefaultSkinHelperMixin",
     "DisconnectedScreenMixin",
@@ -81,7 +80,6 @@
     "EntityVelocityUpdateS2CPacketAccessor",
     "ExplosionMixin",
     "ExplosionS2CPacketMixin",
-    "FileCacheAccessor",
     "FireworkRocketEntityMixin",
     "FireworksSparkParticleMixin",
     "FireworksSparkParticleSubMixin",
@@ -113,7 +111,6 @@
     "LivingEntityRendererMixin",
     "MapRendererAccessor",
     "MapRendererMixin",
-    "MessageHandlerMixin",
     "MinecraftClientAccessor",
     "MinecraftClientMixin",
     "MinecraftServerAccessor",
@@ -169,7 +166,9 @@
     "WorldChunkMixin",
     "WorldRendererAccessor",
     "WorldRendererMixin",
-    "YggdrasilMinecraftSessionServiceAccessor"
+    "YggdrasilMinecraftSessionServiceAccessor",
+    "MessageHandlerMixin",
+    "ChatHudLineVisibleMixin"
   ],
   "injectors": {
     "defaultRequire": 1
