@@ -25,9 +25,10 @@ import meteordevelopment.meteorclient.utils.misc.MeteorIdentifier;
 import meteordevelopment.meteorclient.utils.player.ChatUtils;
 import meteordevelopment.meteorclient.utils.render.color.Color;
 import meteordevelopment.orbit.EventHandler;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.network.PlayerListEntry;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.text.ClickEvent;
 import net.minecraft.text.HoverEvent;
 import net.minecraft.text.MutableText;
@@ -369,7 +370,7 @@ public class BetterChat extends Module {
         return width;
     }
 
-    public void drawPlayerHead(DrawContext context, ChatHudLine.Visible line, int y, int color) {
+    public void drawPlayerHead(MatrixStack matrices, ChatHudLine.Visible line, float y, int color) {
         if (!isActive() || !playerHeads.get()) return;
 
         // Only draw the first line of multi line messages
@@ -377,17 +378,17 @@ public class BetterChat extends Module {
             RenderSystem.enableBlend();
             RenderSystem.setShaderColor(1, 1, 1, Color.toRGBAA(color) / 255f);
 
-            drawTexture(context, (IChatHudLine) (Object) line, y);
+            drawTexture(matrices, (IChatHudLine) (Object) line, (int) y);
 
             RenderSystem.setShaderColor(1, 1, 1, 1);
             RenderSystem.disableBlend();
         }
 
         // Offset
-        context.getMatrices().translate(10, 0, 0);
+        matrices.translate(10, 0, 0);
     }
 
-    private void drawTexture(DrawContext context, IChatHudLine line, int y) {
+    private void drawTexture(MatrixStack matrices, IChatHudLine line, int y) {
         String text = line.meteor$getText().trim();
 
         // Custom
@@ -402,7 +403,8 @@ public class BetterChat extends Module {
         for (CustomHeadEntry entry : CUSTOM_HEAD_ENTRIES) {
             // Check prefix
             if (text.startsWith(entry.prefix(), startOffset)) {
-                context.drawTexture(entry.texture(), 0, y, 8, 8, 0, 0, 64, 64, 64, 64);
+                RenderSystem.setShaderTexture(0, entry.texture());
+                DrawableHelper.drawTexture(matrices, 0, y, 0f, 0f, 64, 64, 64, 64);
                 return;
             }
         }
@@ -415,9 +417,9 @@ public class BetterChat extends Module {
         if (entry == null) return;
 
         Identifier skin = entry.getSkinTexture();
-
-        context.drawTexture(skin, 0, y, 8, 8, 8, 8, 8, 8, 64, 64);
-        context.drawTexture(skin, 0, y, 8, 8, 40, 8, 8, 8, 64, 64);
+        RenderSystem.setShaderTexture(0, skin);
+        DrawableHelper.drawTexture(matrices, 0, y, 8, 8, 8.0F, 8.0F, 8, 8, 64, 64);
+        DrawableHelper.drawTexture(matrices, 0, y, 8, 8, 40.0F, 8.0F, 8, 8, 64, 64);
     }
 
     private GameProfile getSender(IChatHudLine line, String text) {
