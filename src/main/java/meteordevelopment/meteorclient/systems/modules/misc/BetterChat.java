@@ -404,7 +404,11 @@ public class BetterChat extends Module {
             // Check prefix
             if (text.startsWith(entry.prefix(), startOffset)) {
                 RenderSystem.setShaderTexture(0, entry.texture());
-                DrawableHelper.drawTexture(matrices, 0, y, 0f, 0f, 64, 64, 64, 64);
+                matrices.push();
+                matrices.translate(0, y, 0);
+                matrices.scale(0.125f, 0.125f, 1);
+                DrawableHelper.drawTexture(matrices, 0, 0, 0f, 0f, 64, 64, 64, 64);
+                matrices.pop();
                 return;
             }
         }

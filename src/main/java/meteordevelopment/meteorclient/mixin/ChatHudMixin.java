@@ -42,7 +42,6 @@ public abstract class ChatHudMixin implements IChatHud {
     @Shadow @Final private List<ChatHudLine> messages;
 
     @Unique private BetterChat betterChat;
-    @Unique private ChatHudLine.Visible currentVisible;
     @Unique private int nextId;
     @Unique private boolean skipOnAddMessage;
 
@@ -131,8 +130,8 @@ public abstract class ChatHudMixin implements IChatHud {
     }
 
     @Inject(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/font/TextRenderer;drawWithShadow(Lnet/minecraft/client/util/math/MatrixStack;Lnet/minecraft/text/OrderedText;FFI)I"))
-    private void onRender_beforeDrawWithShadow(MatrixStack matrices, OrderedText text, float x, float y, int color, CallbackInfo ci, @Local ChatHudLine.Visible visible) {
-        getBetterChat().drawPlayerHead(matrices, visible, y, color);
+    private void onRender_beforeDrawWithShadow(MatrixStack matrices, int currentTick, int mouseX, int mouseY, CallbackInfo ci, @Local ChatHudLine.Visible visible, @Local(ordinal = 19) int y, @Local(ordinal = 15) int u) {
+        getBetterChat().drawPlayerHead(matrices, visible, (float) y, 16777215 + (u << 24));
     }
 
     // No Message Signature Indicator
