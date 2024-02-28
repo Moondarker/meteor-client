@@ -70,8 +70,6 @@
     "CustomPayloadS2CPacketMixin",
     "DefaultSkinHelperMixin",
     "DisconnectedScreenMixin",
-    "DrawContextMixin",
-    "ElytraFeatureRendererMixin",
     "EnchantingTableBlockEntityRendererMixin",
     "EndCrystalEntityRendererMixin",
     "EntityAccessor",

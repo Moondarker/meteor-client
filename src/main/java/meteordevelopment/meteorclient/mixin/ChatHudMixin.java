@@ -18,8 +18,7 @@ import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.misc.BetterChat;
 import meteordevelopment.meteorclient.systems.modules.render.NoRender;
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.font.TextRenderer;
-import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gui.DrawableHelper;
 import net.minecraft.client.gui.hud.ChatHud;
 import net.minecraft.client.gui.hud.ChatHudLine;
 import net.minecraft.client.gui.hud.MessageIndicator;
@@ -32,6 +31,10 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.*;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.Redirect;
+import org.spongepowered.asm.mixin.injection.Slice;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 
@@ -105,6 +108,8 @@ public abstract class ChatHudMixin implements IChatHud {
                     Modules.get().get(BetterChat.class).lines.removeInt(i);
                 }
             }
+            visibleMessages.removeIf((msg) -> ((IChatHudLine) (Object) msg).getId() == nextId && nextId != 0);
+            messages.removeIf((msg) -> ((IChatHudLine) (Object) msg).getId() == nextId && nextId != 0);
 
             if (event.isModified()) {
                 info.cancel();
@@ -116,32 +121,122 @@ public abstract class ChatHudMixin implements IChatHud {
         }
     }
 
-    //modify max lengths for messages and visible messages
-    @ModifyConstant(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V", constant = @Constant(intValue = 100))
-    private int maxLength(int size) {
-        if (Modules.get() == null || !getBetterChat().isLongerChat()) return size;
-
-        return size + betterChat.getExtraChatLines();
+    @ModifyExpressionValue(method = "addMessage(Lnet/minecraft/text/Text;Lnet/minecraft/network/message/MessageSignatureData;ILnet/minecraft/client/gui/hud/MessageIndicator;Z)V", slice = @Slice(from = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/hud/ChatHud;visibleMessages:Ljava/util/List;")), at = @At(value = "INVOKE", target = "Ljava/util/List;size()I"))
+    private int addMessageListSizeProxy(int size) {
+        BetterChat betterChat = Modules.get().get(BetterChat.class);
+        if (betterChat.isLongerChat() && betterChat.getChatLength() >= 100) return size - betterChat.getChatLength();
+        return size;
     }
 
-    // Player Heads
+    @Inject(method = "render", at = @At("TAIL"))
+    private void onRender(MatrixStack matrices, int currentTick, int mouseX, int mouseY, CallbackInfo info) {
+        if (!Modules.get().get(BetterChat.class).displayPlayerHeads()) return;
+        if (mc.options.getChatVisibility().getValue() == ChatVisibility.HIDDEN) return;
+        int maxLineCount = mc.inGameHud.getChatHud().getVisibleLineCount();
 
-    @ModifyExpressionValue(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/util/math/MathHelper;ceil(F)I"))
-    private int onRender_modifyWidth(int width) {
-        return getBetterChat().modifyChatWidth(width);
+        double d = mc.options.getChatOpacity().getValue() * 0.8999999761581421D + 0.10000000149011612D;
+        double g = 9.0D * (mc.options.getChatLineSpacing().getValue() + 1.0D);
+        double h = -8.0D * (mc.options.getChatLineSpacing().getValue() + 1.0D) + 4.0D * mc.options.getChatLineSpacing().getValue() + 8.0D;
+
+        float chatScale = (float) this.getChatScale();
+        float scaledHeight = mc.getWindow().getScaledHeight();
+
+        matrices.push();
+        matrices.scale(chatScale, chatScale, 1.0f);
+        matrices.translate(2.0f, MathHelper.floor((scaledHeight - 40) / chatScale) - g - 0.1f, 10.0f);
+        RenderSystem.enableBlend();
+        for(int m = 0; m + this.scrolledLines < this.visibleMessages.size() && m < maxLineCount; ++m) {
+            ChatHudLine.Visible chatHudLine = this.visibleMessages.get(m + this.scrolledLines);
+            if (chatHudLine != null) {
+                int x = currentTick - chatHudLine.addedTime();
+                if (x < 200 || isChatFocused()) {
+                    double o = isChatFocused() ? 1.0D : getMessageOpacityMultiplier(x);
+                    if (o * d > 0.01D) {
+                        double s = ((double)(-m) * g);
+                        StringCharacterVisitor visitor = new StringCharacterVisitor();
+                        chatHudLine.content().accept(visitor);
+                        drawIcon(matrices, visitor.result.toString(), (int)(s + h), (float)(o * d));
+                    }
+                }
+            }
+        }
+        RenderSystem.disableBlend();
+        matrices.pop();
+
     }
 
-    @ModifyReceiver(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/DrawContext;drawTextWithShadow(Lnet/minecraft/client/font/TextRenderer;Lnet/minecraft/text/OrderedText;III)I"))
-    private DrawContext onRender_beforeDrawTextWithShadow(DrawContext context, TextRenderer textRenderer, OrderedText text, int x, int y, int color, @Local ChatHudLine.Visible line) {
-        getBetterChat().drawPlayerHead(context, line, y, color);
-        return context;
+    private boolean isChatFocused() {
+        return mc.currentScreen instanceof ChatScreen;
+    }
+
+    @Shadow
+    private static double getMessageOpacityMultiplier(int age) {
+        throw new AssertionError();
+    }
+
+    @Shadow
+    protected abstract void addMessage(Text message, @Nullable MessageSignatureData signature, int ticks, @Nullable MessageIndicator indicator, boolean refresh);
+
+    @Shadow
+    public abstract void addMessage(Text message);
+
+    @Shadow
+    @Final
+    private List<ChatHudLine> messages;
+
+    @Shadow
+    public abstract double getChatScale();
+
+    private void drawIcon(MatrixStack matrices, String line, int y, float opacity) {
+        if (METEOR_PREFIX_REGEX.matcher(line).find()) {
+            RenderSystem.setShaderTexture(0, METEOR_CHAT_ICON);
+            matrices.push();
+            RenderSystem.setShaderColor(1, 1, 1, opacity);
+            matrices.translate(0, y, 0);
+            matrices.scale(0.125f, 0.125f, 1);
+            DrawableHelper.drawTexture(matrices, 0, 0, 0f, 0f, 64, 64, 64, 64);
+            RenderSystem.setShaderColor(1, 1, 1, 1);
+            matrices.pop();
+            return;
+        } else if (BARITONE_PREFIX_REGEX.matcher(line).find()) {
+            RenderSystem.setShaderTexture(0, BARITONE_CHAT_ICON);
+            matrices.push();
+            RenderSystem.setShaderColor(1, 1, 1, opacity);
+            matrices.translate(0, y, 10);
+            matrices.scale(0.125f, 0.125f, 1);
+            DrawableHelper.drawTexture(matrices, 0, 0, 0f, 0f, 64, 64, 64, 64);
+            RenderSystem.setShaderColor(1, 1, 1, 1);
+            matrices.pop();
+            return;
+        }
+
+        Identifier skin = getMessageTexture(line);
+        if (skin != null) {
+            RenderSystem.setShaderColor(1, 1, 1, opacity);
+            RenderSystem.setShaderTexture(0, skin);
+            DrawableHelper.drawTexture(matrices, 0, y, 8, 8, 8.0F, 8.0F,8, 8, 64, 64);
+            DrawableHelper.drawTexture(matrices, 0, y, 8, 8, 40.0F, 8.0F,8, 8, 64, 64);
+            RenderSystem.setShaderColor(1, 1, 1, 1);
+        }
+    }
+
+    private static Identifier getMessageTexture(String message) {
+        if (mc.getNetworkHandler() == null) return null;
+        for (String part : message.split("(§.)|[^\\w]")) {
+            if (part.isBlank()) continue;
+            PlayerListEntry p = mc.getNetworkHandler().getPlayerListEntry(part);
+            if (p != null) {
+                return p.getSkinTexture();
+            }
+        }
+        return null;
     }
 
     // No Message Signature Indicator
 
-    @ModifyExpressionValue(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHudLine$Visible;indicator()Lnet/minecraft/client/gui/hud/MessageIndicator;"))
-    private MessageIndicator onRender_modifyIndicator(MessageIndicator indicator) {
-        return Modules.get().get(NoRender.class).noMessageSignatureIndicator() ? null : indicator;
+    @Redirect(method = "render", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/hud/ChatHudLine$Visible;indicator()Lnet/minecraft/client/gui/hud/MessageIndicator;"))
+    private MessageIndicator onMessageIndicator(ChatHudLine.Visible message) {
+        return Modules.get().get(NoRender.class).noMessageSignatureIndicator() ? null : message.indicator();
     }
 
     // Anti spam

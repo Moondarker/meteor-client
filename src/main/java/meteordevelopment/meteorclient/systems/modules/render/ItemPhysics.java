@@ -54,51 +54,110 @@ public class ItemPhysics extends Module {
         matrices.push();
 
         ItemStack itemStack = event.itemEntity.getStack();
-        BakedModel model = getModel(event.itemEntity);
-        ModelInfo info = getInfo(model);
+        int seed = itemStack.isEmpty() ? 187 : Item.getRawId(itemStack.getItem()) + itemStack.getDamage();
+        event.random.setSeed(seed);
 
-        random.setSeed(event.itemEntity.getId() * 2365798L);
+        event.matrixStack.push();
 
-        applyTransformation(matrices, model);
-        matrices.translate(0, info.offsetY, 0);
-        offsetInWater(matrices, event.itemEntity);
-        preventZFighting(matrices, event.itemEntity);
+        BakedModel bakedModel = event.itemRenderer.getModel(itemStack, event.itemEntity.world, null, 0);
+        boolean hasDepthInGui = bakedModel.hasDepth();
+        int renderCount = getRenderedAmount(itemStack);
+        IItemEntity rotator = (IItemEntity) event.itemEntity;
+        boolean renderBlockFlat = false;
 
-        if (info.flat) {
-            matrices.multiply(RotationAxis.POSITIVE_X.rotationDegrees(90));
-            matrices.translate(0, 0, info.offsetZ);
+        if (event.itemEntity.getStack().getItem() instanceof BlockItem && !(event.itemEntity.getStack().getItem() instanceof AliasedBlockItem)) {
+            Block b = ((BlockItem) event.itemEntity.getStack().getItem()).getBlock();
+            VoxelShape shape = b.getOutlineShape(b.getDefaultState(), event.itemEntity.world, event.itemEntity.getBlockPos(), ShapeContext.absent());
+
+            if (shape.getMax(Direction.Axis.Y) <= .5) renderBlockFlat = true;
         }
 
-        if (randomRotation.get()) {
-            RotationAxis axis = RotationAxis.POSITIVE_Y;
-            if (info.flat) axis = RotationAxis.POSITIVE_Z;
-
-            float degrees = (random.nextFloat() * 2 - 1) * 90;
-            matrices.multiply(axis.rotationDegrees(degrees));
+        Item item = event.itemEntity.getStack().getItem();
+        if (item instanceof BlockItem && !(item instanceof AliasedBlockItem) && !renderBlockFlat) {
+            event.matrixStack.translate(0, -0.06, 0);
         }
 
-        renderItem(event, matrices, itemStack, model, info);
+        if (!renderBlockFlat) {
+            event.matrixStack.translate(0, .185, .0);
+            event.matrixStack.multiply(RotationAxis.POSITIVE_X.rotationDegrees(1.571F));
+            event.matrixStack.translate(0, -.185, -.0);
+        }
 
-        matrices.pop();
-        event.cancel();
-    }
+        boolean isAboveWater = event.itemEntity.world.getBlockState(event.itemEntity.getBlockPos()).getFluidState().getFluid().isIn(FluidTags.WATER);
+        if (!event.itemEntity.isOnGround() && (!event.itemEntity.isSubmergedInWater() && !isAboveWater)) {
+            float rotation = ((float) event.itemEntity.getItemAge() + event.tickDelta) / 20.0F + event.itemEntity.uniqueOffset; // calculate rotation based on age and ticks
 
-    @EventHandler
-    private void onApplyTransformation(ApplyTransformationEvent event) {
-        if (renderingItem) event.cancel();
-    }
+            if (!renderBlockFlat) {
+                event.matrixStack.translate(0, .185, .0);
+                event.matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(rotation));
+                event.matrixStack.translate(0, -.185, .0);
+                rotator.setRotation(new Vec3d(0, 0, rotation));
+            } else {
+                event.matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees(rotation));
+                rotator.setRotation(new Vec3d(0, rotation, 0));
+                event.matrixStack.translate(0, -.065, 0);
+            }
 
-    private void renderItem(RenderItemEntityEvent event, MatrixStack matrices, ItemStack itemStack, BakedModel model, ModelInfo info) {
-        renderingItem = true;
-        int count = getRenderedCount(itemStack);
+            if (event.itemEntity.getStack().getItem() instanceof AliasedBlockItem) {
+                event.matrixStack.translate(0, 0, .195);
+            } else if (!(event.itemEntity.getStack().getItem() instanceof BlockItem)) {
+                event.matrixStack.translate(0, 0, .195);
+            }
+        } else if (event.itemEntity.getStack().getItem() instanceof AliasedBlockItem) {
+            event.matrixStack.translate(0, .185, .0);
+            event.matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) rotator.getRotation().z));
+            event.matrixStack.translate(0, -.185, .0);
+            event.matrixStack.translate(0, 0, .195);
+        } else if (renderBlockFlat) {
+            event.matrixStack.multiply(RotationAxis.POSITIVE_Y.rotationDegrees((float) rotator.getRotation().y));
+            event.matrixStack.translate(0, -.065, 0);
+        } else {
+            if (!(event.itemEntity.getStack().getItem() instanceof BlockItem)) {
+                event.matrixStack.translate(0, 0, .195);
+            }
 
-        for (int i = 0; i < count; i++) {
-            matrices.push();
+            event.matrixStack.translate(0, .185, .0);
+            event.matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees((float) rotator.getRotation().z));
+            event.matrixStack.translate(0, -.185, .0);
+        }
 
-            if (i > 0) {
-                float x = (random.nextFloat() * 2 - 1) * 0.25f;
-                float z = (random.nextFloat() * 2 - 1) * 0.25f;
-                translate(matrices, info, x, 0, z);
+        if (event.itemEntity.world.getBlockState(event.itemEntity.getBlockPos()).getBlock().equals(Blocks.SOUL_SAND)) {
+            event.matrixStack.translate(0, 0, -.1);
+        }
+
+        if (event.itemEntity.getStack().getItem() instanceof BlockItem) {
+            if (((BlockItem) event.itemEntity.getStack().getItem()).getBlock() instanceof SkullBlock) {
+                event.matrixStack.translate(0, .11, 0);
+            }
+        }
+
+        float scaleX = bakedModel.getTransformation().ground.scale.x;
+        float scaleY = bakedModel.getTransformation().ground.scale.y;
+        float scaleZ = bakedModel.getTransformation().ground.scale.z;
+
+        float x;
+        float y;
+        if (!hasDepthInGui) {
+            float r = -0.0F * (float) (renderCount) * 0.5F * scaleX;
+            x = -0.0F * (float) (renderCount) * 0.5F * scaleY;
+            y = -0.09375F * (float) (renderCount) * 0.5F * scaleZ;
+            event.matrixStack.translate(r, x, y);
+        }
+
+        for (int u = 0; u < renderCount; ++u) {
+            event.matrixStack.push();
+            if (u > 0) {
+                if (hasDepthInGui) {
+                    x = (event.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                    y = (event.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                    float z = (event.random.nextFloat() * 2.0F - 1.0F) * 0.15F;
+                    event.matrixStack.translate(x, y, z);
+                } else {
+                    x = (event.random.nextFloat() * 2.0F - 1.0F) * 0.15F * 0.5F;
+                    y = (event.random.nextFloat() * 2.0F - 1.0F) * 0.15F * 0.5F;
+                    event.matrixStack.translate(x, y, 0.0D);
+                    event.matrixStack.multiply(RotationAxis.POSITIVE_Z.rotationDegrees(event.random.nextFloat()));
+                }
             }
 
             event.itemRenderer.renderItem(itemStack, ModelTransformationMode.GROUND, false, matrices, event.vertexConsumerProvider, event.light, OverlayTexture.DEFAULT_UV, model);

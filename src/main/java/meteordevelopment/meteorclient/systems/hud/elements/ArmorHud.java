@@ -5,12 +5,15 @@
 
 package meteordevelopment.meteorclient.systems.hud.elements;
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import meteordevelopment.meteorclient.settings.*;
 import meteordevelopment.meteorclient.systems.hud.Hud;
 import meteordevelopment.meteorclient.systems.hud.HudElement;
 import meteordevelopment.meteorclient.systems.hud.HudElementInfo;
 import meteordevelopment.meteorclient.systems.hud.HudRenderer;
+import meteordevelopment.meteorclient.utils.render.RenderUtils;
 import meteordevelopment.meteorclient.utils.render.color.SettingColor;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.ItemStack;
 import net.minecraft.item.Items;
 
@@ -126,20 +129,25 @@ public class ArmorHud extends HudElement {
         double armorX;
         double armorY;
 
+        MatrixStack matrices = RenderSystem.getModelViewStack();
+
+        matrices.push();
+        matrices.scale(scale.get().floatValue(), scale.get().floatValue(), 1);
+
         int slot = flipOrder.get() ? 3 : 0;
         for (int position = 0; position < 4; position++) {
             ItemStack itemStack = getItem(slot);
 
             if (orientation.get() == Orientation.Vertical) {
-                armorX = x;
-                armorY = y + position * 18 * scale.get();
+                armorX = x / scale.get();
+                armorY = y / scale.get() + position * 18;
             }
             else {
-                armorX = x + position * 18 * scale.get();
-                armorY = y;
+                armorX = x / scale.get() + position * 18;
+                armorY = y / scale.get();
             }
 
-            renderer.item(itemStack, (int) armorX, (int) armorY, scale.get().floatValue(), (itemStack.isDamageable() && durability.get() == Durability.Bar));
+            RenderUtils.drawItem(itemStack, (int) armorX, (int) armorY, (itemStack.isDamageable() && durability.get() == Durability.Bar));
 
             if (itemStack.isDamageable() && !isInEditor() && durability.get() != Durability.Bar && durability.get() != Durability.None) {
                 String message = switch (durability.get()) {
@@ -164,6 +172,8 @@ public class ArmorHud extends HudElement {
             if (flipOrder.get()) slot--;
             else slot++;
         }
+
+        matrices.pop();
 
         if (background.get()) {
             renderer.quad(this.x, this.y, getWidth(), getHeight(), backgroundColor.get());

@@ -16,4 +16,7 @@ public interface ItemStackAccessor {
     @Mutable
     @Accessor("item")
     void setItem(Item item);
+
+    @Accessor("empty")
+    void setEmpty(boolean empty);
 }
