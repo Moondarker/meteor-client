@@ -26,6 +26,7 @@ import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Arrays;
 
@@ -43,10 +44,10 @@ public class SodiumFluidRendererMixin {
     }
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void onRender(BlockRenderView world, FluidState fluidState, BlockPos blockPos, BlockPos offset, ChunkModelBuilder buffers, CallbackInfo info) {
+    private void onRender(BlockRenderView world, FluidState fluidState, BlockPos blockPos, BlockPos offset, ChunkModelBuilder buffers, CallbackInfoReturnable<Boolean> cir) {
         int alpha = Xray.getAlpha(fluidState.getBlockState(), blockPos);
 
-        if (alpha == 0) info.cancel();
+        if (alpha == 0) cir.setReturnValue(false);
     }
 
     @Inject(method = "updateQuad", at = @At("TAIL"))

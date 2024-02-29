@@ -12,14 +12,14 @@ import meteordevelopment.meteorclient.systems.modules.render.Xray;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(value = BlockRenderer.class, remap = false)
 public class SodiumBlockRendererMixin {
     @Inject(method = "renderModel", at = @At("HEAD"), cancellable = true)
-    private void onRenderModel(BlockRenderContext ctx, ChunkModelBuilder buffers, CallbackInfo info) {
+    private void onRenderModel(BlockRenderContext ctx, ChunkModelBuilder buffers, CallbackInfoReturnable<Boolean> cir) {
         int alpha = Xray.getAlpha(ctx.state(), ctx.pos());
 
-        if (alpha == 0) info.cancel();
+        if (alpha == 0) cir.setReturnValue(false);
     }
 }
