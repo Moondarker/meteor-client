@@ -25,7 +25,11 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(value = LightDataAccess.class, remap = false)
 public class SodiumLightDataAccessMixin {
     @Unique
-    private static final int FULL_LIGHT = 15 | 15 << 4 | 15 << 8;
+    private static final int BLOCK_OFFSET = 4;
+    @Unique
+    private static final int SKY_OFFSET = 20;
+    @Unique
+    private static final int FULL_LIGHT = 15 << BLOCK_OFFSET;
 
     @Shadow
     protected BlockRenderView world;
@@ -44,25 +48,26 @@ public class SodiumLightDataAccessMixin {
         fb = Modules.get().get(Fullbright.class);
     }
 
-    @ModifyVariable(method = "compute", at = @At(value = "TAIL"), name = "bl")
-    private int compute_modifyBL(int light) {
+    @ModifyVariable(method = "compute", at = @At(value = "TAIL"), name = "lm")
+    private int compute_modifyLM(int lm) {
         if (xray.isActive()) {
             BlockState state = world.getBlockState(pos);
-            if (!xray.isBlocked(state.getBlock(), pos)) return FULL_LIGHT;
+            if (!xray.isBlocked(state.getBlock(), pos)) return lm | FULL_LIGHT;
         }
 
-        return light;
+        return lm;
     }
 
     // fullbright
 
-    @ModifyVariable(method = "compute", at = @At(value = "STORE"), name = "sl")
-    private int compute_assignSL(int sl) {
-        return Math.max(fb.getLuminance(LightType.SKY), sl);
-    }
+    @ModifyVariable(method = "compute", at = @At(value = "STORE"), name = "lm")
+    private int compute_assignLM(int lm) {
+        if (fb.isActive()) {
+            int sl = Math.max(fb.getLuminance(LightType.SKY), lm >> SKY_OFFSET);
+            int bl = Math.max(fb.getLuminance(LightType.BLOCK), (lm >> BLOCK_OFFSET) & 0xFF);
+            return sl << SKY_OFFSET | bl << BLOCK_OFFSET;
+        }
 
-    @ModifyVariable(method = "compute", at = @At(value = "STORE"), name = "bl")
-    private int compute_assignBL(int bl) {
-        return Math.max(fb.getLuminance(LightType.BLOCK), bl);
+        return lm;
     }
 }
