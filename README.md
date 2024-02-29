@@ -3,18 +3,18 @@
 <img src="https://meteorclient.com/icon.png" alt="meteor-client-logo" width="15%"/>
 </p>
 
-<h1 align="center">Meteor</h1>
-<p align="center">A Minecraft Fabric Utility Mod for anarchy servers.</p>
+<h1 align="center">Meteor Backports</h1>
+<p align="center">A Minecraft Fabric Utility Mod for anarchy servers - backported for Minecraft 1.19.4.</p>
 
 <div align="center">
-    <a href="https://discord.gg/bBGQZvd"><img src="https://img.shields.io/discord/689197705683140636?logo=discord" alt="Discord"/></a>
+    <a href="https://github.com/MeteorDevelopment/meteor-client"><img src="https://img.shields.io/badge/Upstream%20project%20page-8A2BE2" alt="Upstream project page"/></a>
     <br>
-    <img src="https://img.shields.io/github/last-commit/MeteorDevelopment/meteor-client" alt="GitHub last commit"/>
-    <img src="https://img.shields.io/github/commit-activity/w/MeteorDevelopment/meteor-client" alt="GitHub commit activity"/>
-    <img src="https://img.shields.io/github/contributors/MeteorDevelopment/meteor-client" alt="GitHub contributors"/>
+    <img src="https://img.shields.io/github/last-commit/Moondarker/meteor-client-backports" alt="GitHub last commit"/>
+    <img src="https://img.shields.io/github/commit-activity/w/Moondarker/meteor-client-backports" alt="GitHub commit activity"/>
+    <img src="https://img.shields.io/github/contributors/Moondarker/meteor-client-backports" alt="GitHub contributors"/>
     <br>
-    <img src="https://img.shields.io/github/languages/code-size/MeteorDevelopment/meteor-client" alt="GitHub code size in bytes"/>
-    <img src="https://tokei.rs/b1/github/MeteorDevelopment/meteor-client" alt="GitHub lines of code"/>
+    <img src="https://img.shields.io/github/languages/code-size/Moondarker/meteor-client-backports" alt="GitHub code size in bytes"/>
+    <img src="https://tokei.rs/b1/github/Moondarker/meteor-client-backports" alt="GitHub lines of code"/>
 </div>
 
 ## Usage
@@ -36,14 +36,8 @@ We will review and help with all reasonable pull requests as long as the guideli
 - If you need help, check out the [Google Java Style Guide](https://google.github.io/styleguide/javaguide.html) for a reference.
 
 ## Bugs and Suggestions
-Bug reports and suggestions should be made in this repo's [issue tracker](https://github.com/MeteorDevelopment/meteor-client/issues) using the templates provided.  
+Bug reports and suggestions should be made in this repo's [issue tracker](https://github.com/Moondarker/meteor-client-backports/issues) using the templates provided.  
 Please provide as much information as you can to best help us understand your issue and give a better chance of it being resolved.
-
-## Donations
-All of our work is completely free and non-profit (donations pay only for hosting costs), therefore we are very grateful for all donations made to support us in running our community.  
-Donations can be made via our [website](https://meteorclient.com/donate) and the minimum amount to get donor benefits is €5.  
-You will be rewarded with a role on our Discord server and a customisable in-game cape.  
-⚠️ _Make sure to create a Meteor account and link your Discord and Minecraft accounts to fully experience your rewards._ ⚠️
 
 ## Credits
 [Cabaletta](https://github.com/cabaletta) and [WagYourTail](https://github.com/wagyourtail) for [Baritone](https://github.com/cabaletta/baritone)  
@@ -57,4 +51,4 @@ If you use **ANY** code from the source:
 - You must state clearly and obviously to all end users that you are using code from this project.
 - Your application must also be licensed under the same license.
 
-*If you have any other questions, check our [FAQ](https://meteorclient.com/faq) or ask in our [Discord](https://meteorclient.com/discord) server.*
+*If you have any other questions, check upstream project's [FAQ](https://meteorclient.com/faq).*
