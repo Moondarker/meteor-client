@@ -8,9 +8,8 @@ package meteordevelopment.meteorclient.mixin.sodium;
 import me.jellysquid.mods.sodium.client.model.quad.blender.ColorSampler;
 import me.jellysquid.mods.sodium.client.model.light.LightPipeline;
 import me.jellysquid.mods.sodium.client.model.quad.ModelQuadView;
-import me.jellysquid.mods.sodium.client.render.chunk.compile.ChunkBuildBuffers;
+import me.jellysquid.mods.sodium.client.render.chunk.compile.buffers.ChunkModelBuilder;
 import me.jellysquid.mods.sodium.client.render.chunk.compile.pipeline.FluidRenderer;
-import me.jellysquid.mods.sodium.client.world.WorldSlice;
 import meteordevelopment.meteorclient.systems.modules.Modules;
 import meteordevelopment.meteorclient.systems.modules.render.Xray;
 import meteordevelopment.meteorclient.systems.modules.world.Ambience;
@@ -44,7 +43,7 @@ public class SodiumFluidRendererMixin {
     }
 
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void onRender(WorldSlice world, FluidState fluidState, BlockPos blockPos, BlockPos offset, ChunkBuildBuffers buffers, CallbackInfo info) {
+    private void onRender(BlockRenderView world, FluidState fluidState, BlockPos blockPos, BlockPos offset, ChunkModelBuilder buffers, CallbackInfo info) {
         int alpha = Xray.getAlpha(fluidState.getBlockState(), blockPos);
 
         if (alpha == 0) info.cancel();
